@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facial Emotion Detection - EmpathAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Face API script -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+        .facial-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .video-container {
+            position: relative;
+            display: inline-block;
+            margin: 20px 0;
+        }
+
+        #video, #overlay {
+            width: 640px;
+            height: 480px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .control-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .control-panel button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .control-panel button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .control-panel button:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+        .control-panel label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        #emotion-display {
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 20px 0;
+            color: var(--primary-color);
+        }
+
+        #emotions-details {
+            margin: 10px 0 20px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            max-width: 640px;
+            height: 6px;
+            margin: 10px 0;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, var(--primary-color), #4CAF50);
+            transition: width 0.3s;
+        }
+
+        #emotion-advice {
+            margin: 20px auto;
+            max-width: 640px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 15px;
+            text-align: left;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            min-height: 100px;
+        }
+
+        .advice-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        #status, #error {
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        #error {
+            color: #d32f2f;
+            font-weight: 500;
+        }
+
+        .loading-dots {
+            display: inline-block;
+        }
+
+        .loading-dots:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+
+        .back-to-dashboard {
+            align-self: flex-start;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-to-dashboard:hover {
+            text-decoration: underline;
+        }
+
+        #debug-info {
+            margin: 20px auto;
+            max-width: 640px;
+            padding: 10px;
+            text-align: left;
+            font-size: 12px;
+            color: #666;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="facial-container">
+        <a href="/dashboard" class="back-to-dashboard">← Back to Dashboard</a>
+        
+        <div class="header">
+            <h1>Facial Emotion Detection</h1>
+        </div>
+
+        <div id="status">Waiting for models to load...</div>
+        <div id="error"></div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        
+        <div class="video-container">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay"></canvas>
+        </div>
+        
+        <div class="control-panel">
+            <button id="startBtn" disabled>Start Camera</button>
+            <button id="analyzeBtn" disabled>Analyze Emotion</button>
+            <button id="stopBtn" disabled>Stop Camera</button>
+            <label><input type="checkbox" id="autoRefresh"> Auto Refresh</label>
+            <label><input type="checkbox" id="showDebug"> Show Debug Info</label>
+        </div>
+        
+        <div id="emotion-display">Not detected</div>
+        <div id="emotions-details"></div>
+
+        <div id="emotion-advice">
+            <div class="advice-title">Emotion Management Tips:</div>
+            <div id="advice-content">Waiting for emotion detection to provide personalized advice...</div>
+        </div>
+        
+        <div id="debug-info"></div>
+    </div>
+
+    <script>
+    // DOM Elements
+    const video = document.getElementById("video");
+    const overlay = document.getElementById("overlay");
+    const startBtn = document.getElementById("startBtn");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const emotionDisplay = document.getElementById("emotion-display");
+    const emotionsDetails = document.getElementById("emotions-details");
+    const autoRefreshCheckbox = document.getElementById("autoRefresh");
+    const showDebugCheckbox = document.getElementById("showDebug");
+    const statusElement = document.getElementById("status");
+    const errorElement = document.getElementById("error");
+    const emotionAdvice = document.getElementById("emotion-advice");
+    const adviceContent = document.getElementById("advice-content");
+    const progressBar = document.getElementById("progress-bar");
+    const debugInfo = document.getElementById("debug-info");
+
+    // Global variables
+    let stream = null;
+    let autoRefreshInterval = null;
+    let modelsLoaded = false;
+    let lastDetectedEmotion = null;
+    let lastAdviceRequestTime = 0;
+    let isProcessing = false;
+    let modelLoadAttempt = 0;
+    let modelLoadSuccess = false;
+    let previousLandmarks = null; // Store previous face landmarks to detect movement
+    let faceMoveCounter = 0; // Counter to track face movement/rubbing
+    let lastEyeArea = 0; // Store previous eye area to detect crying
+
+    // Default advice for different emotions
+    const defaultAdvice = {
+        neutral: "You appear to be in a neutral emotional state right now. This is a good time to focus on tasks requiring concentration.",
+        happy: "You seem happy! That's wonderful. Try to savor this positive emotion and remember what triggered it.",
+        waiting: "Waiting for emotion detection to provide personalized advice..."
+    };
+
+    // OpenAI API configuration - no client-side API key, we'll use a backend endpoint
+    // or use default advice instead for security
+    
+    // Debug functions
+    showDebugCheckbox.addEventListener("change", function() {
+        debugInfo.style.display = this.checked ? "block" : "none";
+    });
+
+    function logDebug(message) {
+        console.log(message);
+        const time = new Date().toLocaleTimeString();
+        debugInfo.innerHTML += `<div>[${time}] ${message}</div>`;
+        
+        // Keep only the last 10 debug messages
+        const debugElements = debugInfo.querySelectorAll("div");
+        if (debugElements.length > 10) {
+            for (let i = 0; i < debugElements.length - 10; i++) {
+                debugInfo.removeChild(debugElements[i]);
+            }
+        }
+    }
+
+    // Check browser compatibility
+    function checkBrowserCompatibility() {
+        errorElement.textContent = "";
+        
+        // Check if getUserMedia is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            errorElement.textContent = "Your browser doesn't support camera access. Please try a modern browser like Chrome, Firefox, or Edge.";
+            return false;
+        }
+        
+        return true;
+    }
+
+    // List of model sources to try
+    const modelSources = [
+        "https://justadudewhohacks.github.io/face-api.js/weights",
+        "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights",
+        "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model",
+        "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights"
+    ];
+
+    // Load face-api.js models with multiple fallback options
+    async function loadModels() {
+        modelLoadAttempt++;
+        progressBar.style.width = "10%";
+        
+        // Try each model source in order until one works
+        for (let i = 0; i < modelSources.length; i++) {
+            try {
+                const modelPath = modelSources[i];
+                statusElement.textContent = `Loading models from source ${i+1}/${modelSources.length}...`;
+                logDebug(`Trying to load models from: ${modelPath}`);
+                progressBar.style.width = `${10 + (i * 20)}%`;
+                
+                // Configure and load models
+                faceapi.env.monkeyPatch({
+                    Canvas: HTMLCanvasElement,
+                    Image: HTMLImageElement,
+                    ImageData: ImageData,
+                    Video: HTMLVideoElement,
+                    createCanvasElement: () => document.createElement('canvas'),
+                    createImageElement: () => document.createElement('img')
+                });
+                
+                // Load tiny face detector for faster processing
+                await faceapi.nets.tinyFaceDetector.loadFromUri(modelPath);
+                progressBar.style.width = `${30 + (i * 15)}%`;
+                logDebug("Tiny face detector loaded");
+                
+                // Load face landmarks model
+                await faceapi.nets.faceLandmark68Net.loadFromUri(modelPath);
+                progressBar.style.width = `${45 + (i * 15)}%`;
+                logDebug("Face landmarks model loaded");
+                
+                // Load facial expression recognition model
+                await faceapi.nets.faceExpressionNet.loadFromUri(modelPath);
+                progressBar.style.width = `${60 + (i * 15)}%`;
+                logDebug("Face expression model loaded");
+                
+                // Optional model for better detection
+                try {
+                    await faceapi.nets.ssdMobilenetv1.loadFromUri(modelPath);
+                    logDebug("SSD Mobilenet model loaded");
+                } catch (err) {
+                    logDebug("SSD Mobilenet model failed to load, continuing with tiny face detector");
+                }
+                
+                logDebug(`Successfully loaded all models from source ${i+1}`);
+                modelsLoaded = true;
+                startBtn.disabled = false;
+                statusElement.textContent = "Models loaded. Click 'Start Camera' to begin.";
+                progressBar.style.width = "100%";
+                modelLoadSuccess = true;
+                return true;
+            } catch (err) {
+                console.error(`Failed to load models from source ${i+1}:`, err);
+                logDebug(`Failed to load from source ${i+1}: ${err.message}`);
+                
+                // If this is the last source, show error
+                if (i === modelSources.length - 1) {
+                    if (modelLoadAttempt <= 2) {
+                        logDebug(`Retrying model load, attempt ${modelLoadAttempt + 1}`);
+                        return loadModels(); // Try again
+                    } else {
+                        errorElement.textContent = "Failed to load face detection models after multiple attempts. Try refreshing the page or check if your firewall is blocking the resources.";
+                        statusElement.textContent = "Error loading models. Please refresh the page to try again.";
+                        progressBar.style.width = "0%";
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    // Initialize everything
+    function init() {
+        if (checkBrowserCompatibility()) {
+            loadModels();
+        }
+    }
+
+    // Start camera with enhanced error handling
+    startBtn.addEventListener("click", async () => {
+        try {
+            errorElement.textContent = "";
+            statusElement.textContent = "Accessing camera...";
+            progressBar.style.width = "25%";
+            
+            if (!modelsLoaded) {
+                statusElement.textContent = "Models not loaded yet. Trying again...";
+                const modelsLoadedSuccessfully = await loadModels();
+                if (!modelsLoadedSuccessfully) {
+                    errorElement.textContent = "Cannot start camera without face detection models. Please refresh the page.";
+                    return;
+                }
+            }
+            
+            // Check if stream is already active
+            if (stream && video.srcObject) {
+                statusElement.textContent = "Camera is already running.";
+                return;
+            }
+            
+            // Request camera with explicit constraints for better compatibility
+            const constraints = { 
+                video: { 
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: "user"
+                }
+            };
+            
+            progressBar.style.width = "50%";
+            
+            // Try to access the camera
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            
+            // Set video source
+            video.srcObject = stream;
+            video.muted = true;
+            
+            // Make sure video plays on iOS and mobile devices
+            video.setAttribute('autoplay', '');
+            video.setAttribute('muted', '');
+            video.setAttribute('playsinline', '');
+            
+            progressBar.style.width = "75%";
+            
+            // Wait for video to be ready
+            await new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    resolve();
+                };
+                
+                // If already loaded
+                if (video.readyState >= 2) {
+                    resolve();
+                }
+            });
+            
+            // Try to play the video
+            await video.play();
+            
+            // Set up canvas once video dimensions are known
+            overlay.width = video.videoWidth;
+            overlay.height = video.videoHeight;
+            
+            progressBar.style.width = "100%";
+            
+            // Update UI
+            startBtn.disabled = true;
+            analyzeBtn.disabled = false;
+            stopBtn.disabled = false;
+            statusElement.textContent = "Camera started. Click 'Analyze Emotion' to detect expressions.";
+            logDebug("Camera started successfully");
+            
+        } catch (err) {
+            console.error("Error accessing camera:", err);
+            logDebug(`Camera error: ${err.name} - ${err.message}`);
+            
+            // Provide specific error messages based on the error type
+            if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                errorElement.textContent = "Camera access denied. Please allow camera access in your browser settings and try again.";
+            } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+                errorElement.textContent = "No camera found. Please connect a camera and try again.";
+            } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
+                errorElement.textContent = "Camera is already in use by another application. Please close other apps using the camera.";
+            } else if (err.name === "OverconstrainedError") {
+                errorElement.textContent = "Camera doesn't meet requirements. Try a different camera.";
+                } else {
+                errorElement.textContent = "Camera error: " + err.message;
+            }
+            
+            statusElement.textContent = "Failed to start camera.";
+            progressBar.style.width = "0%";
+        }
+    });
+
+    // Stop camera
+    stopBtn.addEventListener("click", () => {
+        if (stream) {
+            // Stop all tracks
+            stream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+            stream = null;
+            
+            // Update UI
+            startBtn.disabled = false;
+            analyzeBtn.disabled = true;
+            stopBtn.disabled = true;
+            emotionDisplay.textContent = "Not detected";
+            
+            // Clear canvas
+            const ctx = overlay.getContext("2d");
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+            
+            // Stop auto refresh
+            if (autoRefreshCheckbox.checked) {
+                autoRefreshCheckbox.checked = false;
+                clearInterval(autoRefreshInterval);
+            }
+            
+            // Reset advice to waiting state but don't hide the box
+            adviceContent.textContent = defaultAdvice.waiting;
+            
+            statusElement.textContent = "Camera stopped.";
+            progressBar.style.width = "0%";
+            logDebug("Camera stopped");
+        }
+    });
+
+    // Simplified function to get advice for emotions
+    // Instead of using OpenAI API directly, we'll use predefined advice for security reasons
+    function getEmotionAdvice(emotion) {
+        // Default advice for common emotions
+        const adviceMap = {
+            neutral: "Your facial expression appears neutral. This is a good time for focused work or meditation.",
+            happy: "You're showing signs of happiness! Take a moment to savor this feeling and remember what's bringing you joy.",
+            sad: "I notice signs of sadness. Try taking a few deep breaths, reaching out to a friend, or doing a small activity you enjoy.",
+            angry: "You seem to be experiencing anger. Consider stepping away briefly, practicing deep breathing, or writing down your thoughts.",
+            surprised: "You look surprised! Take a moment to process whatever new information you've received before reacting.",
+            fearful: "I detect signs of fear or anxiety. Try grounding yourself by naming 5 things you can see, 4 things you can touch, 3 things you can hear, 2 things you can smell, and 1 thing you can taste."
+        };
+        
+        return adviceMap[emotion] || "I'm not sure what emotion you're experiencing. Consider checking in with yourself about how you're feeling right now.";
+    }
+
+    // Analyze emotion with enhanced methods and fallbacks
+    analyzeBtn.addEventListener("click", analyzeEmotion);
+
+    async function analyzeEmotion() {
+        if (!stream || isProcessing) {
+            if (!stream) {
+                errorElement.textContent = "Camera is not active. Please start the camera first.";
+            }
+            return;
+        }
+        
+        try {
+            isProcessing = true;
+            statusElement.textContent = "Analyzing...";
+            errorElement.textContent = "";
+            progressBar.style.width = "30%";
+            logDebug("Starting emotion analysis");
+            
+            // Capture frame from video for higher quality analysis
+            const captureCanvas = document.createElement('canvas');
+            captureCanvas.width = video.videoWidth;
+            captureCanvas.height = video.videoHeight;
+            const captureCtx = captureCanvas.getContext('2d');
+            captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+            
+            progressBar.style.width = "40%";
+            
+            // Try to detect using tiny face detector first (faster)
+            let detections = await faceapi.detectAllFaces(captureCanvas, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.3 }))
+                .withFaceLandmarks()
+                .withFaceExpressions();
+            
+            progressBar.style.width = "60%";
+            
+            // If no face found with tiny detector, try SSD Mobilenet if available (more accurate but slower)
+            if (detections.length === 0 && faceapi.nets.ssdMobilenetv1.isLoaded) {
+                logDebug("No face found with tiny detector, trying SSD Mobilenet");
+                detections = await faceapi.detectAllFaces(captureCanvas, new faceapi.SsdMobilenetv1Options())
+                    .withFaceLandmarks()
+                    .withFaceExpressions();
+                progressBar.style.width = "70%";
+            }
+            
+            // Clear previous drawings
+            const ctx = overlay.getContext("2d");
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+            
+            if (detections.length > 0) {
+                logDebug(`Found ${detections.length} faces`);
+                
+                // Draw face detections
+                faceapi.draw.drawDetections(overlay, detections);
+                faceapi.draw.drawFaceLandmarks(overlay, detections);
+                
+                // Get emotions from first face
+                const expressions = detections[0].expressions;
+                logDebug(`Expressions detected: ${JSON.stringify(expressions)}`);
+                
+                // Apply emotion strength modifiers
+                expressions.angry = expressions.angry * 1.8;
+                if (expressions.angry > 1) expressions.angry = 1.0;
+                
+                const originalSadValue = expressions.sad;
+                expressions.sad = 0;
+                
+                expressions.neutral = expressions.neutral * 0.3;
+                
+                // Get facial landmarks for feature detection
+                const landmarks = detections[0].landmarks;
+                const mouth = landmarks.getMouth();
+                
+                // Calculate mouth openness
+                const topLipY = (mouth[13].y + mouth[14].y) / 2;
+                const bottomLipY = (mouth[19].y + mouth[18].y) / 2;
+                
+                const leftMouth = mouth[0].x;
+                const rightMouth = mouth[6].x;
+                const mouthWidth = rightMouth - leftMouth;
+                
+                const mouthOpenness = (bottomLipY - topLipY) / mouthWidth;
+                const MOUTH_OPEN_THRESHOLD = 0.15;
+                
+                const isMouthOpen = mouthOpenness > MOUTH_OPEN_THRESHOLD;
+                const isSmiling = expressions.happy > 0.5;
+                
+                // Face movement detection
+                let isFaceRubbing = false;
+                let isCrying = false;
+                
+                // Get eye landmarks for crying detection
+                const leftEye = landmarks.getLeftEye();
+                const rightEye = landmarks.getRightEye();
+                
+                // Calculate eye openness
+                const leftEyeHeight = Math.abs(leftEye[1].y - leftEye[5].y); 
+                const rightEyeHeight = Math.abs(rightEye[1].y - rightEye[5].y);
+                const avgEyeHeight = (leftEyeHeight + rightEyeHeight) / 2;
+                
+                // Get eye width for normalization
+                const leftEyeWidth = Math.abs(leftEye[0].x - leftEye[3].x);
+                const rightEyeWidth = Math.abs(rightEye[0].x - rightEye[3].x);
+                const avgEyeWidth = (leftEyeWidth + rightEyeWidth) / 2;
+                
+                // Normalized eye openness (height to width ratio)
+                const eyeAspectRatio = avgEyeHeight / avgEyeWidth;
+                
+                // Detect crying
+                const EYE_ASPECT_CRYING_THRESHOLD = 0.15;
+                
+                if (eyeAspectRatio < EYE_ASPECT_CRYING_THRESHOLD && originalSadValue > 0.3) {
+                    isCrying = true;
+                }
+                
+                // Face movement/rubbing detection
+                if (previousLandmarks && !isSmiling) {
+                    // Calculate total movement of key landmark points
+                    let totalMovement = 0;
+                    const keyPoints = [
+                        ...landmarks.getNose(),
+                        ...landmarks.getLeftEye(),
+                        ...landmarks.getRightEye()
+                    ];
+                    
+                    // Compare with previous landmarks
+                    for (let i = 0; i < keyPoints.length && i < previousLandmarks.length; i++) {
+                        const dx = keyPoints[i].x - previousLandmarks[i].x;
+                        const dy = keyPoints[i].y - previousLandmarks[i].y;
+                        totalMovement += Math.sqrt(dx * dx + dy * dy);
+                    }
+                    
+                    // Normalize movement by number of points compared
+                    const avgMovement = totalMovement / keyPoints.length;
+                    
+                    // Threshold for significant movement (face rubbing)
+                    const MOVEMENT_THRESHOLD = 2.0;
+                    
+                    if (avgMovement > MOVEMENT_THRESHOLD) {
+                        faceMoveCounter++;
+                        
+                        // Consider it face rubbing if we detect significant movement for a few consecutive frames
+                        if (faceMoveCounter >= 5) {
+                            isFaceRubbing = true;
+                        }
+                    } else {
+                        // Reset counter if movement is below threshold
+                        faceMoveCounter = Math.max(0, faceMoveCounter - 1);
+                    }
+                } else if (isSmiling) {
+                    // Reset the face movement counter when smiling to prevent false face rubbing detection
+                    faceMoveCounter = 0;
+                }
+                
+                // Store current landmarks for next comparison
+                previousLandmarks = [...landmarks.getLeftEye(), 
+                                    ...landmarks.getRightEye(), 
+                                    ...landmarks.getNose()];
+                
+                // Enable sad emotion if face rubbing or crying is detected
+                if ((isFaceRubbing || isCrying) && !isSmiling) {
+                    // Use original sad value or a minimum value, whichever is higher
+                    expressions.sad = Math.max(originalSadValue, 0.7);
+                }
+
+                // Filter out unwanted emotions
+                const filteredExpressions = { ...expressions };
+                delete filteredExpressions.fearful;
+                delete filteredExpressions.disgusted;
+                
+                // Create a copy of expressions to work with
+                const sortedEmotions = Object.entries(filteredExpressions)
+                    .filter(([emotion]) => emotion !== 'neutral') // Temporarily exclude neutral
+                    .sort((a, b) => b[1] - a[1]); // Sort by confidence value (descending)
+                
+                // Determine the dominant emotion with proper neutral handling and mouth open override
+                let maxEmotion;
+                let maxValue;
+                
+                // Priority-based emotion selection
+                if (isSmiling) {
+                    maxEmotion = "happy";
+                    maxValue = Math.max(0.9, expressions.happy);
+                    
+                    // Update the expressions object for visualization
+                    filteredExpressions.happy = maxValue;
+                    expressions.happy = maxValue;
+                }
+                else if (isFaceRubbing || isCrying) {
+                    maxEmotion = "sad";
+                    maxValue = expressions.sad;
+                }
+                else if (isMouthOpen) {
+                    maxEmotion = "surprised";
+                    maxValue = Math.max(0.85, expressions.surprised);
+                    
+                    // Also update the expressions object for visualization
+                    filteredExpressions.surprised = maxValue;
+                    expressions.surprised = maxValue;
+                }
+                else if (expressions.angry > 0.1) {
+                    maxEmotion = "angry";
+                    maxValue = Math.max(0.7, expressions.angry);
+                    
+                    // Also update the expressions object for visualization
+                    filteredExpressions.angry = maxValue;
+                    expressions.angry = maxValue;
+                }
+                else {
+                    // Very low threshold for neutral to prevent it from dominating
+                    const neutralThreshold = 0.2;
+                    
+                    // Regular emotion logic - reduced preference for neutral
+                    if (sortedEmotions.length === 0) {
+                        maxEmotion = "neutral";
+                        maxValue = expressions.neutral;
+                    } else if (expressions.neutral > sortedEmotions[0][1] * 3.0) {
+                        maxEmotion = "neutral";
+                        maxValue = expressions.neutral;
+                    } else {
+                        [maxEmotion, maxValue] = sortedEmotions[0];
+                    }
+                }
+                
+                // Format emotion name
+                const displayEmotion = maxEmotion.charAt(0).toUpperCase() + maxEmotion.slice(1);
+                
+                // Display the emotion
+                emotionDisplay.textContent = displayEmotion;
+                
+                // Display all emotions
+                emotionsDetails.innerHTML = "";
+                
+                // Create a container for the emotions list
+                const emotionsContainer = document.createElement("div");
+                emotionsContainer.style.display = "flex";
+                emotionsContainer.style.flexWrap = "nowrap";
+                emotionsContainer.style.gap = "10px";
+                emotionsContainer.style.justifyContent = "center";
+                emotionsContainer.style.marginTop = "15px";
+                emotionsContainer.style.marginBottom = "15px";
+                emotionsContainer.style.overflowX = "auto";
+                emotionsContainer.style.padding = "5px";
+                
+                // Create an array to store all emotions and their values for sorting
+                const allEmotions = [];
+                
+                // Add neutral to the array
+                allEmotions.push({
+                    name: "neutral",
+                    value: expressions.neutral,
+                    displayName: "Neutral"
+                });
+                
+                // Add other emotions (except fearful and disgusted) to the array
+                for (const [emotion, value] of Object.entries(expressions)) {
+                    // Skip fearful and disgusted
+                    if (emotion === 'fearful' || emotion === 'disgusted') continue;
+                    if (emotion === 'neutral') continue; // Already added
+                    
+                    // Skip emotions with very low values
+                    if (value < 0.05) continue;
+                    
+                    const displayName = emotion.charAt(0).toUpperCase() + emotion.slice(1);
+                    
+                    allEmotions.push({
+                        name: emotion,
+                        value: value,
+                        displayName: displayName
+                    });
+                }
+                
+                // Sort all emotions alphabetically for consistent ordering
+                allEmotions.sort((a, b) => a.displayName.localeCompare(b.displayName));
+                
+                // Create and add elements for each emotion
+                for (const emotion of allEmotions) {
+                    const emotionEl = document.createElement("div");
+                    emotionEl.textContent = emotion.displayName;
+                    emotionEl.style.padding = "8px 15px";
+                    emotionEl.style.borderRadius = "20px";
+                    emotionEl.style.fontSize = "16px";
+                    emotionEl.style.whiteSpace = "nowrap"; // Prevent text wrapping
+                    
+                    // Highlight if it's the dominant emotion
+                    if (emotion.name === maxEmotion) {
+                        emotionEl.style.backgroundColor = "var(--primary-color)";
+                        emotionEl.style.color = "white";
+                        emotionEl.style.fontWeight = "bold";
+                        emotionEl.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+                        emotionEl.style.transform = "scale(1.1)";
+                    } else {
+                        emotionEl.style.backgroundColor = "#f0f0f0";
+                        emotionEl.style.color = "#333";
+                    }
+                    
+                    emotionsContainer.appendChild(emotionEl);
+                }
+                
+                emotionsDetails.appendChild(emotionsContainer);
+                
+                statusElement.textContent = "Analysis complete.";
+                
+                // Get emotion advice if emotion changed
+                if (maxEmotion !== lastDetectedEmotion) {
+                    lastDetectedEmotion = maxEmotion;
+                    logDebug(`Getting advice for ${maxEmotion}`);
+                    
+                    const advice = getEmotionAdvice(maxEmotion);
+                    adviceContent.textContent = advice;
+                }
+                
+            } else {
+                logDebug("No face detected");
+                emotionDisplay.textContent = "No face detected";
+                statusElement.textContent = "No face detected in the image. Please make sure your face is clearly visible.";
+                // Keep the advice box visible but update content
+                adviceContent.textContent = "No face detected. Position your face clearly in the camera frame.";
+            }
+            
+            progressBar.style.width = "100%";
+            setTimeout(() => {
+                progressBar.style.width = "0%";
+            }, 500);
+            
+        } catch (err) {
+            console.error("Error analyzing emotions:", err);
+            logDebug(`Analysis error: ${err.message}`);
+            errorElement.textContent = "Error analyzing emotions: " + err.message;
+            statusElement.textContent = "Analysis failed. Please check browser console for details.";
+            progressBar.style.width = "0%";
+        } finally {
+            isProcessing = false;
+        }
+    }
+
+    // Auto refresh
+    autoRefreshCheckbox.addEventListener("change", function() {
+        if (this.checked) {
+            if (stream) {
+                // Start auto refresh every 2 seconds
+                statusElement.textContent = "Auto-refresh enabled. Continuously analyzing emotions.";
+                autoRefreshInterval = setInterval(() => {
+                    if (!isProcessing) {
+                        analyzeEmotion();
+                    }
+                }, 2000);
+                
+                // Run immediately
+                if (!isProcessing) {
+                    analyzeEmotion();
+                }
+                
+                logDebug("Auto-refresh enabled");
+            } else {
+                this.checked = false;
+                errorElement.textContent = "Please start the camera first";
+            }
+        } else {
+            clearInterval(autoRefreshInterval);
+            statusElement.textContent = "Auto-refresh disabled.";
+            logDebug("Auto-refresh disabled");
+        }
+    });
+
+    // Initialize the app
+    init();
+    </script>
+</body>
+</html> 

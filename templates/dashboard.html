@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EmpathAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        .dashboard-container {
+            max-width: 100%;
+            margin: 0;
+            padding: 2rem 3rem;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            justify-content: flex-start;
+            gap: 2.5rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2rem;
+            background: var(--surface);
+            width: 100%;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-actions {
+            margin-left: auto;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+        }
+
+        .welcome-section {
+            margin-left: 2rem;
+        }
+
+        .welcome-section h1 {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-section p {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.6rem 1.8rem;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .logout-btn:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+            color: white;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 2rem;
+            width: 100%;
+            flex: 1;
+            align-items: start;
+        }
+
+        .dashboard-content {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            width: 100%;
+            grid-column: 2;
+            padding: 0;
+        }
+
+        .tools-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+            justify-content: start;
+        }
+
+        .tool-card {
+            width: 100%;
+            background: white;
+            border-radius: 18px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: var(--primary-color);
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .tool-card:hover:before {
+            height: 8px;
+            background: var(--primary-dark);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .tool-icon {
+            font-size: 2.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-card h2 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.6rem;
+        }
+
+        .tool-card p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .card-action {
+            color: var(--primary-color);
+            font-weight: 500;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            margin-top: auto;
+            transition: color 0.3s ease;
+        }
+
+        .tool-card:hover .card-action {
+            color: var(--primary-dark);
+        }
+
+        .card-action::after {
+            content: '→';
+            margin-left: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .tool-card:hover .card-action::after {
+            transform: translateX(8px);
+        }
+
+        /* Daily Checklist Styles */
+        .daily-checklist {
+            background: white;
+            border-radius: 18px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            grid-column: 1;
+            align-self: start;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            width: 400px;
+        }
+        
+        .daily-checklist:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: var(--accent-color);
+            opacity: 0.8;
+        }
+
+        .checklist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(76, 175, 80, 0.1);
+        }
+
+        .checklist-header h2 {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+        }
+
+        #progress-text {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .checklist-items {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 1.2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .checklist-item:hover {
+            transform: translateX(5px);
+            background: #f0f4f1;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .checklist-item.completed {
+            background: #e8f5e9;
+            border-left: 3px solid var(--success-color);
+        }
+
+        .checkbox-wrapper {
+            margin-right: 1rem;
+        }
+
+        .custom-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--primary-color);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .custom-checkbox.checked {
+            background-color: var(--primary-color);
+        }
+
+        .custom-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 16px;
+        }
+
+        .item-content {
+            flex-grow: 1;
+        }
+
+        .item-content h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .item-content p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* Journal Styles */
+        .journal-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(3px);
+        }
+
+        .journal-modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .journal-content {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 18px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transform: translateY(20px);
+            opacity: 0;
+            animation: modalSlideIn 0.4s ease forwards;
+        }
+
+        @keyframes modalSlideIn {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .journal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.8rem;
+            border-bottom: 2px solid var(--background-light);
+            padding-bottom: 1.2rem;
+        }
+
+        .journal-header h2 {
+            font-size: 2rem;
+            color: var(--text-primary);
+        }
+
+        .journal-close {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .journal-close:hover {
+            color: var(--error-color);
+            background: rgba(211, 47, 47, 0.1);
+        }
+
+        .journal-title {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            font-size: 1.5rem;
+            border: none;
+            border-bottom: 2px solid var(--background-light);
+            margin-bottom: 1.5rem;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .journal-title:focus {
+            outline: none;
+            border-bottom-color: var(--primary-color);
+        }
+
+        .journal-content textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 1.2rem;
+            border: 2px solid var(--background-light);
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            resize: vertical;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .journal-content textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .journal-toolbar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mood-selector {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .mood-option {
+            padding: 0.6rem 1.2rem;
+            border-radius: 20px;
+            border: 2px solid var(--background-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .mood-option:hover {
+            border-color: var(--primary-color);
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        .mood-option.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .tags-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border: 2px solid var(--background-light);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .tag {
+            background: var(--background-light);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .tag-input {
+            border: none;
+            padding: 0.25rem;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .tag-input:focus {
+            outline: none;
+        }
+
+        .journal-entries {
+            margin-top: 2rem;
+        }
+
+        .journal-entry {
+            background: var(--background-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .journal-entry:hover {
+            transform: translateX(5px);
+            background: #e8f5e9;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .entry-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+        }
+
+        .entry-date {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-style: italic;
+        }
+
+        .entry-preview {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.5;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-bottom: 0.8rem;
+        }
+
+        .entry-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.8rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .entry-mood {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .entry-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .entry-tag {
+            background: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .entry-tag:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .journal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--background-light);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--background-dark);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #b71c1c;
+            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
+        }
+
+        /* Add new search styles */
+        .journal-search {
+            position: relative;
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+
+        .journal-search input {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            padding-left: 3rem;
+            border: 2px solid var(--background-light);
+            border-radius: 30px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .journal-search input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .journal-search::before {
+            content: '🔍';
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            background: var(--background-light);
+            border-radius: 12px;
+            margin-top: 2rem;
+            font-size: 1.2rem;
+        }
+
+        /* Media Queries for Responsive Layout */
+        @media (max-width: 1400px) {
+            .tools-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+            
+            .tool-card {
+                padding: 2rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 350px 1fr;
+                gap: 2rem;
+            }
+            
+            .tools-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+            
+            .dashboard-container {
+                padding: 1.5rem 2rem;
+            }
+
+            .daily-checklist {
+                width: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .daily-checklist {
+                grid-column: auto;
+                position: static;
+                margin-bottom: 2rem;
+            }
+            
+            .dashboard-content {
+                grid-column: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <svg class="logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 40C31.0457 40 40 31.0457 40 20C40 8.9543 31.0457 0 20 0C8.9543 0 0 8.9543 0 20C0 31.0457 8.9543 40 20 40Z" fill="#4CAF50"/>
+                    <path d="M20 35C28.2843 35 35 28.2843 35 20C35 11.7157 28.2843 5 20 5C11.7157 5 5 11.7157 5 20C5 28.2843 11.7157 35 20 35Z" fill="#388E3C"/>
+                    <path d="M20 30C25.5228 30 30 25.5228 30 20C30 14.4772 25.5228 10 20 10C14.4772 10 10 14.4772 10 20C10 25.5228 14.4772 30 20 30Z" fill="#4CAF50"/>
+                    <path d="M20 25C22.7614 25 25 22.7614 25 20C25 17.2386 22.7614 15 20 15C17.2386 15 15 17.2386 15 20C15 22.7614 17.2386 25 20 25Z" fill="white"/>
+                </svg>
+                <span class="logo-text">Soulify</span>
+                <div class="welcome-section">
+                    <h1>Welcome back, <span id="username-display"></span>!</h1>
+                    <p>How can I help you today?</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button onclick="window.location.href='/logout'" class="logout-btn">Logout</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="daily-checklist">
+                <div class="checklist-header">
+                    <h2>Daily Wellness</h2>
+                    <div id="progress-text">0/4 Completed</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+                <div class="checklist-items">
+                    <div class="checklist-item" data-id="1">
+                        <div class="checkbox-wrapper">
+                            <div class="custom-checkbox"></div>
+                        </div>
+                        <div class="item-content">
+                            <h3>Destress with EmpathAI</h3>
+                            <p>Have a supportive chat session to process your thoughts and feelings</p>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-id="2">
+                        <div class="checkbox-wrapper">
+                            <div class="custom-checkbox"></div>
+                        </div>
+                        <div class="item-content">
+                            <h3>Breathing Exercise</h3>
+                            <p>Take a moment to center yourself with guided breathing</p>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-id="3">
+                        <div class="checkbox-wrapper">
+                            <div class="custom-checkbox"></div>
+                        </div>
+                        <div class="item-content">
+                            <h3>Gratitude Moment</h3>
+                            <p>Write down three things you're grateful for today</p>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-id="4">
+                        <div class="checkbox-wrapper">
+                            <div class="custom-checkbox"></div>
+                        </div>
+                        <div class="item-content">
+                            <h3>Physical Activity</h3>
+                            <p>Take a short walk or do some light stretching</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="tools-grid">
+                    <div class="tool-card" onclick="window.location.href='/chat'">
+                        <div>
+                            <div class="tool-icon">💭</div>
+                            <h2>EmpathAI Chat</h2>
+                            <p>Start a supportive conversation with your AI mental health assistant</p>
+                        </div>
+                        <div class="card-action">Start Chat</div>
+                    </div>
+
+                    <div class="tool-card" onclick="window.location.href='/mental-wellness'">
+                        <div>
+                            <div class="tool-icon">🧘</div>
+                            <h2>Mental Wellness Games</h2>
+                            <p>Interactive exercises and games to promote mental well-being and mindfulness</p>
+                        </div>
+                        <div class="card-action">Start Exercise</div>
+                    </div>
+
+                    <div class="tool-card" onclick="window.location.href='/facial-detection'">
+                        <div>
+                            <div class="tool-icon">😊</div>
+                            <h2>Facial Emotion Detection</h2>
+                            <p>Analyze your facial expressions to understand your emotional state in real-time</p>
+                        </div>
+                        <div class="card-action">Start Detection</div>
+                    </div>
+
+                    <div class="tool-card" onclick="openJournal()">
+                        <div>
+                            <div class="tool-icon">📔</div>
+                            <h2>Journal</h2>
+                            <p>Express your thoughts and feelings in a private digital journal</p>
+                        </div>
+                        <div class="card-action">Open Journal</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Journal Modal -->
+    <div class="journal-modal" id="journalModal">
+        <div class="journal-content">
+            <div class="journal-header">
+                <h2>My Journal</h2>
+                <button class="journal-close" onclick="closeJournal()">&times;</button>
+            </div>
+
+            <div class="journal-toolbar">
+                <button class="btn" onclick="newEntry()">New Entry</button>
+            </div>
+
+            <div class="journal-search">
+                <input type="text" placeholder="Search entries..." id="journalSearch" oninput="searchEntries(this.value)">
+            </div>
+
+            <div id="entryEditor" style="display: none;">
+                <input type="text" class="journal-title" placeholder="Entry Title" id="entryTitle">
+                
+                <div class="mood-selector">
+                    <div class="mood-option" data-mood="Happy">😊 Happy</div>
+                    <div class="mood-option" data-mood="Calm">😌 Calm</div>
+                    <div class="mood-option" data-mood="Sad">😢 Sad</div>
+                    <div class="mood-option" data-mood="Anxious">😰 Anxious</div>
+                    <div class="mood-option" data-mood="Angry">😠 Angry</div>
+                </div>
+
+                <div class="tags-input">
+                    <input type="text" class="tag-input" placeholder="Add tags..." id="tagInput">
+                </div>
+
+                <textarea placeholder="Write your thoughts here..." id="entryContent"></textarea>
+
+                <div class="journal-actions">
+                    <button class="btn btn-secondary" onclick="cancelEntry()">Cancel</button>
+                    <button class="btn" onclick="saveEntry()">Save Entry</button>
+                </div>
+            </div>
+
+            <div id="entriesList" class="journal-entries">
+                <!-- Entries will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch and display username
+        async function fetchUsername() {
+            try {
+                const response = await fetch('/user');
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('username-display').textContent = data.username;
+                }
+            } catch (error) {
+                console.error('Error fetching username:', error);
+            }
+        }
+
+        // Initialize checklist functionality
+        function initializeChecklist() {
+            const checklistItems = document.querySelectorAll('.checklist-item');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const totalItems = checklistItems.length;
+            let completedItems = 0;
+
+            // Load saved state from localStorage
+            const savedState = JSON.parse(localStorage.getItem('dailyChecklist') || '{}');
+            const today = new Date().toDateString();
+            
+            if (savedState.date === today) {
+                checklistItems.forEach(item => {
+                    const itemId = item.dataset.id;
+                    if (savedState[itemId]) {
+                        completeItem(item);
+                    }
+                });
+            } else {
+                // Reset for new day
+                localStorage.setItem('dailyChecklist', JSON.stringify({ date: today }));
+            }
+
+            function updateProgress() {
+                const progress = (completedItems / totalItems) * 100;
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${completedItems}/${totalItems} Completed`;
+            }
+
+            function completeItem(item) {
+                const checkbox = item.querySelector('.custom-checkbox');
+                checkbox.classList.add('checked');
+                item.classList.add('completed');
+                completedItems++;
+                updateProgress();
+
+                // Save to localStorage
+                const savedState = JSON.parse(localStorage.getItem('dailyChecklist') || '{}');
+                savedState[item.dataset.id] = true;
+                localStorage.setItem('dailyChecklist', JSON.stringify(savedState));
+            }
+
+            function uncompleteItem(item) {
+                const checkbox = item.querySelector('.custom-checkbox');
+                checkbox.classList.remove('checked');
+                item.classList.remove('completed');
+                completedItems--;
+                updateProgress();
+
+                // Save to localStorage
+                const savedState = JSON.parse(localStorage.getItem('dailyChecklist') || '{}');
+                delete savedState[item.dataset.id];
+                localStorage.setItem('dailyChecklist', JSON.stringify(savedState));
+            }
+
+            checklistItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    if (item.classList.contains('completed')) {
+                        uncompleteItem(item);
+                    } else {
+                        completeItem(item);
+                    }
+                });
+            });
+
+            // Initial progress update
+            updateProgress();
+        }
+
+        // Journal functionality
+        let currentEntry = null;
+        let selectedMood = null;
+        let currentTags = new Set();
+
+        function openJournal() {
+            document.getElementById('journalModal').classList.add('active');
+            showEntries();
+        }
+
+        function closeJournal() {
+            document.getElementById('journalModal').classList.remove('active');
+        }
+
+        function newEntry() {
+            document.getElementById('entryEditor').style.display = 'block';
+            document.getElementById('entriesList').style.display = 'none';
+            document.getElementById('entryTitle').value = '';
+            document.getElementById('entryContent').value = '';
+            currentEntry = null;
+            selectedMood = null;
+            currentTags.clear();
+            updateTagsDisplay();
+            clearMoodSelection();
+        }
+
+        function showEntries() {
+            document.getElementById('entryEditor').style.display = 'none';
+            document.getElementById('entriesList').style.display = 'block';
+            loadEntries();
+        }
+
+        async function loadEntries(searchTerm = '') {
+            try {
+                const response = await fetch('/journal/entries');
+                const data = await response.json();
+                const entriesList = document.getElementById('entriesList');
+                entriesList.innerHTML = '';
+
+                let entries = data.entries;
+                
+                if (searchTerm) {
+                    searchTerm = searchTerm.toLowerCase();
+                    entries = entries.filter(entry => {
+                        const titleMatch = entry.title.toLowerCase().includes(searchTerm);
+                        const contentMatch = entry.content.toLowerCase().includes(searchTerm);
+                        const moodMatch = entry.mood && entry.mood.toLowerCase().includes(searchTerm);
+                        const tagsMatch = entry.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                        return titleMatch || contentMatch || moodMatch || tagsMatch;
+                    });
+                }
+
+                if (entries.length === 0) {
+                    entriesList.innerHTML = `
+                        <div class="no-results">
+                            ${searchTerm ? 'No entries found matching your search' : 'No journal entries yet'}
+                        </div>
+                    `;
+                    return;
+                }
+
+                entries.forEach(entry => {
+                    const entryElement = document.createElement('div');
+                    entryElement.className = 'journal-entry';
+                    entryElement.onclick = () => editEntry(entry);
+
+                    const date = new Date(entry.created_at).toLocaleDateString();
+                    const preview = entry.content.substring(0, 100) + (entry.content.length > 100 ? '...' : '');
+
+                    entryElement.innerHTML = `
+                        <div class="entry-header">
+                            <div class="entry-title">${entry.title}</div>
+                            <div class="entry-date">${date}</div>
+                        </div>
+                        <div class="entry-preview">${preview}</div>
+                        <div class="entry-footer">
+                            <div class="entry-mood">${entry.mood ? `${getMoodEmoji(entry.mood)} ${entry.mood}` : ''}</div>
+                            <div class="entry-tags">
+                                ${entry.tags.map(tag => `<span class="entry-tag">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                    `;
+
+                    entriesList.appendChild(entryElement);
+                });
+            } catch (error) {
+                console.error('Error loading entries:', error);
+            }
+        }
+
+        function getMoodEmoji(mood) {
+            const moodEmojis = {
+                'Happy': '😊',
+                'Calm': '😌',
+                'Sad': '😢',
+                'Anxious': '😰',
+                'Angry': '😠'
+            };
+            return moodEmojis[mood] || '';
+        }
+
+        function editEntry(entry) {
+            currentEntry = entry;
+            document.getElementById('entryEditor').style.display = 'block';
+            document.getElementById('entriesList').style.display = 'none';
+            document.getElementById('entryTitle').value = entry.title;
+            document.getElementById('entryContent').value = entry.content;
+            selectedMood = entry.mood;
+            currentTags = new Set(entry.tags);
+            updateTagsDisplay();
+            updateMoodSelection();
+        }
+
+        async function saveEntry() {
+            const title = document.getElementById('entryTitle').value;
+            const content = document.getElementById('entryContent').value;
+
+            if (!title || !content) {
+                alert('Please fill in both title and content');
+                return;
+            }
+
+            const entryData = {
+                title,
+                content,
+                mood: selectedMood,
+                tags: Array.from(currentTags)
+            };
+
+            try {
+                const url = currentEntry 
+                    ? `/journal/entry/${currentEntry.id}`
+                    : '/journal/entry';
+                const method = currentEntry ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(entryData)
+                });
+
+                if (response.ok) {
+                    showEntries();
+                } else {
+                    throw new Error('Failed to save entry');
+                }
+            } catch (error) {
+                console.error('Error saving entry:', error);
+                alert('Failed to save entry');
+            }
+        }
+
+        async function deleteEntry() {
+            if (!currentEntry || !confirm('Are you sure you want to delete this entry?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/journal/entry/${currentEntry.id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showEntries();
+                } else {
+                    throw new Error('Failed to delete entry');
+                }
+            } catch (error) {
+                console.error('Error deleting entry:', error);
+                alert('Failed to delete entry');
+            }
+        }
+
+        function cancelEntry() {
+            showEntries();
+        }
+
+        // Mood selection
+        document.querySelectorAll('.mood-option').forEach(option => {
+            option.addEventListener('click', () => {
+                selectedMood = option.dataset.mood;
+                updateMoodSelection();
+            });
+        });
+
+        function updateMoodSelection() {
+            document.querySelectorAll('.mood-option').forEach(option => {
+                option.classList.toggle('selected', option.dataset.mood === selectedMood);
+            });
+        }
+
+        function clearMoodSelection() {
+            selectedMood = null;
+            updateMoodSelection();
+        }
+
+        // Tags functionality
+        document.getElementById('tagInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.value.trim()) {
+                currentTags.add(e.target.value.trim());
+                e.target.value = '';
+                updateTagsDisplay();
+            }
+        });
+
+        function updateTagsDisplay() {
+            const tagsContainer = document.querySelector('.tags-input');
+            const tagInput = document.getElementById('tagInput');
+            const tags = Array.from(currentTags);
+
+            // Remove all existing tags
+            Array.from(tagsContainer.children).forEach(child => {
+                if (child !== tagInput) {
+                    child.remove();
+                }
+            });
+
+            // Add new tags
+            tags.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'tag';
+                tagElement.innerHTML = `
+                    ${tag}
+                    <span class="tag-remove" onclick="removeTag('${tag}')">&times;</span>
+                `;
+                tagsContainer.insertBefore(tagElement, tagInput);
+            });
+        }
+
+        function removeTag(tag) {
+            currentTags.delete(tag);
+            updateTagsDisplay();
+        }
+
+        // Add search functionality
+        let searchTimeout;
+        function searchEntries(searchTerm) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadEntries(searchTerm);
+            }, 300); // Debounce search for better performance
+        }
+
+        // Initialize
+        fetchUsername();
+        initializeChecklist();
+    </script>
+</body>
+</html> 

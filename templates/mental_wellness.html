@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Wellness Games - EmpathAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #388E3C;
+            --accent-color: #03DAC6;
+            --background: #1E1E1E;
+            --surface: #2D2D2D;
+            --text-primary: #FFFFFF;
+            --text-secondary: #BB86FC;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+            border-bottom: none;
+        }
+
+        .back-button {
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+
+        .container {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: var(--background);
+        }
+
+        #breathingCanvas {
+            background: transparent;
+            margin: 2rem auto;
+            border-radius: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .instruction {
+            font-size: 2rem;
+            font-weight: 500;
+            margin: 1rem 0;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .timer {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .progress-container {
+            width: 100%;
+            max-width: 400px;
+            height: 6px;
+            background: var(--surface);
+            border-radius: 3px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .phase-dots {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .phase-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .phase-dot.active {
+            background: var(--accent-color);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .games-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 800px;
+            padding: 2rem;
+        }
+
+        .game-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .game-card:hover {
+            transform: translateX(10px);
+            border-color: var(--primary-color);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .game-icon-wrapper {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 72px;
+            height: 72px;
+        }
+
+        .game-icon {
+            width: 40px;
+            height: 40px;
+        }
+
+        .game-content {
+            flex: 1;
+        }
+
+        .game-title {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .game-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .game-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .game-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .game-status {
+            margin-left: auto;
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--primary-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .coming-soon {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .game-container {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .game-container.active {
+            display: flex;
+        }
+
+        #gameArea {
+            width: 100%;
+            height: 600px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 16px;
+            background: var(--surface);
+            margin-top: 2rem;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            animation: float 4s infinite ease-in-out;
+            border: 2px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.1s ease;
+            pointer-events: auto;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-25px); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="/dashboard" class="back-button">← Back to Dashboard</a>
+        <h1>Mental Wellness Games</h1>
+    </header>
+
+    <div class="container">
+        <!-- Games Menu -->
+        <div class="games-menu" id="gamesMenu">
+            <div class="game-card" onclick="startGame('breathing')">
+                <div class="game-icon-wrapper">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTI0IDQ4QzM3LjI1NDggNDggNDggMzcuMjU0OCA0OCAyNEM0OCAxMC43NDUyIDM3LjI1NDggMCAyNCAwQzEwLjc0NTIgMCAwIDEwLjc0NTIgMCAyNEMwIDM3LjI1NDggMTAuNzQ1MiA0OCAyNCA0OFoiIGZpbGw9IiM0Q0FGNTAiLz4KPHBhdGggZD0iTTI0IDM2QzMwLjYyNzQgMzYgMzYgMzAuNjI3NCAzNiAyNEMzNiAxNy4zNzI2IDMwLjYyNzQgMTIgMjQgMTJDMTcuMzcyNiAxMiAxMiAxNy4zNzI2IDEyIDI0QzEyIDMwLjYyNzQgMTcuMzcyNiAzNiAyNCAzNloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=" class="game-icon" alt="Mindful Breathing">
+                </div>
+                <div class="game-content">
+                    <h2 class="game-title">Mindful Breathing</h2>
+                    <p class="game-description">A calming breathing exercise designed to help reduce stress and anxiety through guided meditation and visualization.</p>
+                    <div class="game-meta">
+                        <span>🎯 Stress Relief</span>
+                        <div class="game-status">Available Now</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-card" onclick="window.location.href='/balloon-game'">
+                <div class="game-icon-wrapper">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTI0IDQ4QzM3LjI1NDggNDggNDggMzcuMjU0OCA0OCAyNEM0OCAxMC43NDUyIDM3LjI1NDggMCAyNCAwQzEwLjc0NTIgMCAwIDEwLjc0NTIgMCAyNEMwIDM3LjI1NDggMTAuNzQ1MiA0OCAyNCA0OFoiIGZpbGw9IiM0NUI3RDEiLz4KPHBhdGggZD0iTTI0IDM2QzMwLjYyNzQgMzYgMzYgMzAuNjI3NCAzNiAyNEMzNiAxNy4zNzI2IDMwLjYyNzQgMTIgMjQgMTJDMTcuMzcyNiAxMiAxMiAxNy4zNzI2IDEyIDI0QzEyIDMwLjYyNzQgMTcuMzcyNiAzNiAyNCAzNloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=" class="game-icon" alt="Balloon Relaxation">
+                </div>
+                <div class="game-content">
+                    <h2 class="game-title">Balloon Relaxation</h2>
+                    <p class="game-description">A calming interactive experience where you can pop floating balloons to create a zen mode of relaxation. Control the speed and enjoy a peaceful atmosphere.</p>
+                    <div class="game-meta">
+                        <span>🎈 Relaxation</span>
+                        <span>🎮 Interactive</span>
+                        <div class="game-status">Available Now</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Breathing Exercise Game -->
+        <div class="game-container" id="breathingGame">
+            <a href="#" class="back-button" onclick="showMenu(event)">← Back to Games</a>
+            <canvas id="breathingCanvas" width="800" height="600"></canvas>
+            <div class="instruction" id="instruction">Ready to begin</div>
+            <div class="timer" id="timer"></div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="phase-dots">
+                <div class="phase-dot" id="dot1"></div>
+                <div class="phase-dot" id="dot2"></div>
+                <div class="phase-dot" id="dot3"></div>
+            </div>
+            <div class="controls">
+                <button class="btn" id="startBtn">Start Exercise</button>
+            </div>
+        </div>
+
+        <!-- Bubble Pop Game -->
+        <div class="game-container" id="bubblePopGame">
+            <a href="#" class="back-button" onclick="showMenu(event)">← Back to Games</a>
+            <div id="gameArea"></div>
+        </div>
+    </div>
+
+    <script>
+        // Game navigation functions
+        function startGame(gameId) {
+            document.getElementById('gamesMenu').style.display = 'none';
+            if (gameId === 'breathing') {
+                document.getElementById('breathingGame').classList.add('active');
+                if (!window.breathingExercise) {
+                    window.breathingExercise = new BreathingExercise();
+                }
+            } else if (gameId === 'bubblepop') {
+                document.getElementById('bubblePopGame').classList.add('active');
+                if (!window.bubblePopGame) {
+                    window.bubblePopGame = new BubblePopGame();
+                } else {
+                    window.bubblePopGame.reset();
+                    window.bubblePopGame.init();
+                }
+            }
+        }
+
+        function showMenu(event) {
+            event.preventDefault();
+            document.getElementById('gamesMenu').style.display = 'flex';
+            document.getElementById('breathingGame').classList.remove('active');
+            document.getElementById('bubblePopGame').classList.remove('active');
+            if (window.breathingExercise) {
+                window.breathingExercise.reset();
+            }
+            if (window.bubblePopGame) {
+                window.bubblePopGame.reset();
+            }
+        }
+
+        class BreathingExercise {
+            constructor() {
+                this.canvas = document.getElementById('breathingCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.instruction = document.getElementById('instruction');
+                this.timer = document.getElementById('timer');
+                this.progressBar = document.getElementById('progressBar');
+                this.startBtn = document.getElementById('startBtn');
+                
+                // Timing parameters (in milliseconds)
+                this.INHALE_TIME = 4000;
+                this.HOLD_TIME = 2000;
+                this.EXHALE_TIME = 4000;
+                this.CYCLE_TIME = this.INHALE_TIME + this.HOLD_TIME + this.EXHALE_TIME;
+                
+                // Animation state
+                this.isAnimating = false;
+                this.startTime = 0;
+                this.animationFrame = null;
+                
+                // Setup event listener
+                this.startBtn.addEventListener('click', () => this.start());
+                
+                // Initialize stars
+                this.stars = this.createStars();
+                
+                // Initial render
+                this.render();
+            }
+            
+            createStars() {
+                const stars = [];
+                for (let i = 0; i < 25; i++) {
+                    stars.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 0.9 + 0.3
+                    });
+                }
+                return stars;
+            }
+            
+            start() {
+                if (this.isAnimating) {
+                    this.reset();
+                    return;
+                }
+                this.isAnimating = true;
+                this.startTime = performance.now();
+                this.startBtn.textContent = 'Reset Exercise';
+                this.animate();
+            }
+            
+            stop() {
+                this.isAnimating = false;
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                }
+            }
+            
+            reset() {
+                this.stop();
+                this.startBtn.textContent = 'Start Exercise';
+                this.instruction.textContent = 'Ready to begin';
+                this.timer.textContent = '';
+                this.progressBar.style.width = '0%';
+                this.updatePhaseDots(-1);
+                this.render();
+            }
+            
+            updatePhaseDots(phase) {
+                const dots = [
+                    document.getElementById('dot1'),
+                    document.getElementById('dot2'),
+                    document.getElementById('dot3')
+                ];
+                dots.forEach((dot, i) => {
+                    dot.className = i === phase ? 'phase-dot active' : 'phase-dot';
+                });
+            }
+            
+            animate() {
+                if (!this.isAnimating) return;
+                
+                const currentTime = performance.now();
+                const elapsed = (currentTime - this.startTime) % this.CYCLE_TIME;
+                
+                // Update progress bar with adjusted timing
+                const progress = Math.min(100, Math.max(0, (elapsed / this.CYCLE_TIME) * 100));
+                this.progressBar.style.width = `${progress}%`;
+                
+                if (elapsed < this.INHALE_TIME) {
+                    this.instruction.textContent = 'Inhale';
+                    this.updatePhaseDots(0);
+                    this.timer.textContent = `${Math.max(0, ((this.INHALE_TIME - elapsed) / 1000)).toFixed(1)}s`;
+                } else if (elapsed < this.INHALE_TIME + this.HOLD_TIME) {
+                    this.instruction.textContent = 'Hold';
+                    this.updatePhaseDots(1);
+                    this.timer.textContent = `${Math.max(0, ((this.INHALE_TIME + this.HOLD_TIME - elapsed) / 1000)).toFixed(1)}s`;
+                } else {
+                    this.instruction.textContent = 'Exhale';
+                    this.updatePhaseDots(2);
+                    this.timer.textContent = `${Math.max(0, ((this.CYCLE_TIME - elapsed) / 1000)).toFixed(1)}s`;
+                }
+                
+                this.render(elapsed);
+                this.animationFrame = requestAnimationFrame(() => this.animate());
+            }
+            
+            render(elapsed = 0) {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Render stars with twinkling effect
+                const currentTime = performance.now();
+                this.stars.forEach((star, i) => {
+                    const twinkle = Math.sin((currentTime / 2000) + i) * 0.3 + 0.7;
+                    const size = star.size * twinkle;
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(star.x, star.y, size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                
+                if (!this.isAnimating) return;
+                
+                // Calculate breathing circle parameters
+                const centerX = this.canvas.width / 2;
+                let centerY, radius;
+                
+                if (elapsed < this.INHALE_TIME) {
+                    const progress = this.easeInOut(elapsed / this.INHALE_TIME);
+                    centerY = 450 - (250 * progress);
+                    radius = 25 + (progress * 15);
+                } else if (elapsed < this.INHALE_TIME + this.HOLD_TIME) {
+                    centerY = 200;
+                    radius = 40;
+                } else {
+                    const progress = this.easeInOut((elapsed - this.INHALE_TIME - this.HOLD_TIME) / this.EXHALE_TIME);
+                    centerY = 200 + (250 * progress);
+                    radius = 40 - (progress * 15);
+                }
+                
+                // Draw breathing circle
+                this.ctx.fillStyle = '#03DAC6';
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Draw trail effect
+                const trailOpacity = 0.3;
+                this.ctx.fillStyle = `rgba(3, 218, 198, ${trailOpacity})`;
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius * 1.2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+            
+            easeInOut(x) {
+                return x * x * (3 - 2 * x);
+            }
+        }
+
+        class BubblePopGame {
+            constructor() {
+                this.gameArea = document.getElementById('gameArea');
+                this.colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#FF9999'];
+                this.bubbles = [];
+                this.isActive = true;
+                this.init();
+            }
+
+            init() {
+                this.isActive = true;
+                // Clear any existing bubbles
+                this.bubbles.forEach(bubble => bubble.remove());
+                this.bubbles = [];
+                
+                // Create initial bubbles
+                for (let i = 0; i < 15; i++) {
+                    this.createBubble();
+                }
+            }
+
+            createBubble() {
+                if (!this.isActive) return;
+
+                const bubble = document.createElement('div');
+                bubble.classList.add('bubble');
+                
+                const size = Math.random() * 30 + 40; // Random size between 40-70px
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.backgroundColor = this.colors[Math.floor(Math.random() * this.colors.length)];
+                
+                // Ensure bubbles are placed within visible bounds
+                const maxX = this.gameArea.clientWidth - size;
+                const maxY = this.gameArea.clientHeight - size;
+                bubble.style.left = `${Math.random() * maxX}px`;
+                bubble.style.top = `${Math.random() * maxY}px`;
+                
+                bubble.addEventListener('click', () => {
+                    if (!this.isActive) return;
+                    bubble.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        if (this.isActive) {
+                            bubble.remove();
+                            this.createBubble();
+                        }
+                    }, 50);
+                });
+
+                this.gameArea.appendChild(bubble);
+                this.bubbles.push(bubble);
+            }
+
+            reset() {
+                this.isActive = false;
+                this.bubbles.forEach(bubble => bubble.remove());
+                this.bubbles = [];
+            }
+        }
+
+        // Initialize both games when the page loads
+        window.addEventListener('load', () => {
+            new BreathingExercise();
+        });
+    </script>
+</body>
+</html> 

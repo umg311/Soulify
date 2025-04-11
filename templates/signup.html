@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - EmpathAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="logo-container">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="20" fill="#4CAF50"/>
+                    <path d="M20 10C14.486 10 10 14.486 10 20C10 25.514 14.486 30 20 30C25.514 30 30 25.514 30 20C30 14.486 25.514 10 20 10ZM20 28C15.589 28 12 24.411 12 20C12 15.589 15.589 12 20 12C24.411 12 28 15.589 28 20C28 24.411 24.411 28 20 28Z" fill="white"/>
+                    <path d="M20 14C16.686 14 14 16.686 14 20C14 23.314 16.686 26 20 26C23.314 26 26 23.314 26 20C26 16.686 23.314 14 20 14ZM20 24C17.79 24 16 22.21 16 20C16 17.79 17.79 16 20 16C22.21 16 24 17.79 24 20C24 22.21 22.21 24 20 24Z" fill="white"/>
+                    <circle cx="20" cy="20" r="3" fill="white"/>
+                </svg>
+                <h1>Soulify</h1>
+            </div>
+            <p>Start your journey to better mental well-being</p>
+        </div>
+        <form id="signup-form">
+            <div class="form-group">
+                <input type="text" id="username" name="username" class="input-field" 
+                       placeholder="Choose a username" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" name="password" class="input-field" 
+                       placeholder="Create a password" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="confirm-password" name="confirm-password" class="input-field" 
+                       placeholder="Confirm password" required>
+            </div>
+            <button type="submit" class="btn">Create Account</button>
+            <div id="error-message" class="error-message"></div>
+        </form>
+        <div class="auth-footer">
+            <p>Already have an account? <a href="/login">Log in</a></p>
+        </div>
+    </div>
+
+    <div class="background-animation">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div>
+
+    <style>
+        .error-message {
+            color: var(--error-color);
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            min-height: 20px;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+        }
+
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .password-strength {
+            height: 4px;
+            margin-top: -10px;
+            margin-bottom: 15px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .password-strength.weak {
+            background: var(--error-color);
+            width: 33%;
+        }
+
+        .password-strength.medium {
+            background: #FFA000;
+            width: 66%;
+        }
+
+        .password-strength.strong {
+            background: var(--success-color);
+            width: 100%;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-container h1 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header p {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            opacity: 0.1;
+            border-radius: 40%;
+            transform-origin: 50% 48%;
+            animation: wave 25s infinite linear;
+        }
+
+        .wave:nth-child(2) {
+            animation-duration: 15s;
+            opacity: 0.05;
+        }
+
+        .wave:nth-child(3) {
+            animation-duration: 20s;
+            opacity: 0.075;
+        }
+
+        @keyframes wave {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+
+    <script>
+        const form = document.getElementById('signup-form');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm-password');
+        const errorDiv = document.getElementById('error-message');
+
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            return strength;
+        }
+
+        password.addEventListener('input', (e) => {
+            const strength = checkPasswordStrength(e.target.value);
+            const strengthBar = document.querySelector('.password-strength') || document.createElement('div');
+            strengthBar.className = 'password-strength';
+            
+            if (strength === 0) {
+                strengthBar.remove();
+                return;
+            }
+
+            strengthBar.className = `password-strength ${strength === 1 ? 'weak' : strength === 2 ? 'medium' : 'strong'}`;
+            if (!document.querySelector('.password-strength')) {
+                e.target.parentNode.appendChild(strengthBar);
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPass = document.getElementById('confirm-password').value;
+            const button = e.target.querySelector('button');
+
+            if (password !== confirmPass) {
+                errorDiv.textContent = 'Passwords do not match';
+                return;
+            }
+
+            if (checkPasswordStrength(password) < 2) {
+                errorDiv.textContent = 'Password is too weak. Include uppercase, lowercase, and numbers.';
+                return;
+            }
+
+            try {
+                button.disabled = true;
+                button.classList.add('loading');
+                button.textContent = 'Creating Account...';
+                errorDiv.textContent = '';
+
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    button.textContent = 'Success!';
+                    button.style.background = 'var(--success-color)';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
+                } else {
+                    errorDiv.textContent = data.error || 'Signup failed. Please try again.';
+                    button.classList.remove('loading');
+                    button.textContent = 'Create Account';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'An error occurred. Please try again.';
+            } finally {
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html> 

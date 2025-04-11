@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - EmpathAI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="logo-container">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="20" fill="#4CAF50"/>
+                    <path d="M20 10C14.486 10 10 14.486 10 20C10 25.514 14.486 30 20 30C25.514 30 30 25.514 30 20C30 14.486 25.514 10 20 10ZM20 28C15.589 28 12 24.411 12 20C12 15.589 15.589 12 20 12C24.411 12 28 15.589 28 20C28 24.411 24.411 28 20 28Z" fill="white"/>
+                    <path d="M20 14C16.686 14 14 16.686 14 20C14 23.314 16.686 26 20 26C23.314 26 26 23.314 26 20C26 16.686 23.314 14 20 14ZM20 24C17.79 24 16 22.21 16 20C16 17.79 17.79 16 20 16C22.21 16 24 17.79 24 20C24 22.21 22.21 24 20 24Z" fill="white"/>
+                    <circle cx="20" cy="20" r="3" fill="white"/>
+                </svg>
+                <h1>Soulify</h1>
+            </div>
+            <p>Your Supportive Mental Health Assistant</p>
+        </div>
+        <form id="login-form" onsubmit="handleSubmit(event)">
+            <div class="form-group">
+                <input type="text" id="username" name="username" class="input-field" 
+                       placeholder="Username" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" name="password" class="input-field" 
+                       placeholder="Password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn login-btn">Log In</button>
+            <div id="error-message" class="error-message"></div>
+        </form>
+        <div class="auth-footer">
+            <p>Don't have an account? <a href="/signup">Sign up</a></p>
+        </div>
+    </div>
+
+    <div class="background-animation">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+    </div>
+
+    <style>
+        .error-message {
+            color: var(--error-color);
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+        }
+
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            opacity: 0.1;
+            border-radius: 40%;
+            transform-origin: 50% 48%;
+            animation: wave 25s infinite linear;
+        }
+
+        .wave:nth-child(2) {
+            animation-duration: 15s;
+            opacity: 0.05;
+        }
+
+        .wave:nth-child(3) {
+            animation-duration: 20s;
+            opacity: 0.075;
+        }
+
+        @keyframes wave {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1em;
+            margin-top: 10px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-container h1 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header p {
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+    </style>
+
+    <script>
+        async function handleSubmit(event) {
+            event.preventDefault();
+            const submitButton = document.querySelector('button[type="submit"]');
+            const errorDiv = document.getElementById('error-message');
+            
+            // Disable submit button and show loading state
+            submitButton.disabled = true;
+            submitButton.innerHTML = 'Logging in...';
+            errorDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Check if there's a redirect URL in the response
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
+                } else {
+                    errorDiv.textContent = data.error || 'Login failed';
+                    errorDiv.style.display = 'block';
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = 'Login';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'An error occurred. Please try again.';
+                errorDiv.style.display = 'block';
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Login';
+            }
+
+        }
+    </script>
+</body>
+</html></html>
