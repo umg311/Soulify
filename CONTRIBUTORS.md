@@ -5,7 +5,7 @@ This file lists the contributors to the Soulify project and acknowledges their s
 ## Core Team
 
 - umg311 - Project lead, Flask backend architecture, SQLAlchemy database design, frontend development, UI/UX design, OpenAI API integration, DevOps
-- AEdebug - Facial detection functionality development
+- AEdebug - Facial detection functionality development and realtime AI advice
 - 1x8f - Breathing/balloon game development
 
 ## Contributions Breakdown
@@ -39,6 +39,9 @@ This file lists the contributors to the Soulify project and acknowledges their s
 - Achieved smooth FPS with requestAnimationFrame
 - Solved coordinate mapping between video feed and canvas overlay
 - Implemented confidence thresholding
+- AI-Powered Help used OpenAI’s API to generate real-time, conversational mental health support, offering coping strategies and resources.
+- Secondary Feature Analysis: Detected mouth openness (surprise), eye aspect ratio (crying).
+- Movement Tracking: Used facial landmark displacement to detect repetitive gestures (e.g., face rubbing) as signs of distress.
 
 ### 1x8f
 - Developed the interactive breathing/balloon game using JavaScript and HTML5 Canvas
